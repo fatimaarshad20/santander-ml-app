@@ -1,0 +1,38 @@
+<main class="shell">
+  <header>
+    <h1>Santander Customer Transaction Prediction</h1>
+    <p>XGBoost ML Inference Engine</p>
+  </header>
+
+  @if (deployedStatic) {
+    <aside class="notice">Static Demo Mode: Start local Flask backend for predictions.</aside>
+  }
+
+  <form (ngSubmit)="submit()">
+    <h2>Feature Schema Input ({{fields.length}} variables)</h2>
+    <div class="grid">
+      @for (field of fields; track field.name) {
+        <label>
+          {{field.label}}
+          <input type="number" step="any" [name]="field.name" [(ngModel)]="values[field.name]" required />
+        </label>
+      }
+    </div>
+    <button type="submit" [disabled]="loading || deployedStatic">
+      {{loading ? 'Predicting...' : 'Run Local Prediction'}}
+    </button>
+  </form>
+
+  @if (error) { <p class="error" role="alert">{{error}}</p> }
+
+  @if (result) {
+    <section class="result">
+      <h2>Prediction Result</h2>
+      <p>Predicted Output: <strong>{{result.prediction}}</strong></p>
+      @if (result.probabilities) {
+        <p>Probabilities: {{result.probabilities.join(', ')}}</p>
+      }
+      <p><small>{{result.disclaimer}}</small></p>
+    </section>
+  }
+</main>

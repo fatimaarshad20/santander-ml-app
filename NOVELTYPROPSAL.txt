@@ -1,0 +1,82 @@
+================================================================================
+RESEARCH NOVELTY & ARCHITECTURAL ANALYSIS
+Project Title: Full-Stack Operationalization and Multi-Model Imbalance Analysis 
+               for Santander Customer Transaction Prediction
+Reference Study: Baramal & Chauhan, "A Comparative Study of TabNet and XGBoost 
+                 for Tabular Data Classification"
+================================================================================
+
+1. OVERVIEW & PROBLEM STATEMENT
+--------------------------------------------------------------------------------
+Prior empirical research by Baramal & Chauhan compared Gradient Boosted Decision 
+Trees (XGBoost) and Deep Tabular Learning (TabNet) across structured benchmarks, 
+concluding that XGBoost achieves superior accuracy (~91% on Santander) and 
+training efficiency. However, traditional comparative studies remain confined 
+to offline execution environments and rely heavily on top-line accuracy metrics.
+
+This project addresses two critical gaps in the reference literature:
+  1. The Operationalization Gap: Transitioning a serialized ML artifact from an 
+     offline notebook into a validated, full-stack web application with 
+     automated CI/CD pipelines.
+  2. The "Accuracy Trap": Evaluating how extreme class imbalance (~90% negative 
+     vs. ~10% positive transactions) causes high-accuracy tree models to fail 
+     at minority-class detection (Recall).
+
+2. EXPERIMENTAL BENCHMARK & ALGORITHMIC NOVELTY
+--------------------------------------------------------------------------------
+Rather than limiting evaluation to tree-boosting and deep learning, this work 
+benchmarks three distinct algorithmic families across the 200-feature Santander 
+Customer Transaction dataset (var_0 to var_199):
+
+  Model                 Accuracy   Precision   Recall    F1-Score   ROC-AUC   Train Time
+  --------------------------------------------------------------------------------------
+  XGBoost               91.26%     84.33%      16.07%    0.2700     0.8785    53.37 s
+  Random Forest         90.38%     60.02%      12.96%    0.2132     0.8178    148.49 s
+  Logistic Regression   78.32%     28.63%      77.49%    0.4181     0.8596    1.59 s
+
+Key Analytical Insight ("The Accuracy Trap"):
+  - Replication of Baseline: Our XGBoost model achieved 91.26% accuracy, closely 
+    aligning with the 91.0% accuracy reported by Baramal & Chauhan.
+  - Sensitivity Trade-Off: Despite high overall accuracy and precision (84.33%), 
+    unweighted XGBoost yielded a Recall of only 16.07%—missing nearly 84% of 
+    true positive customer transactions. Random Forest exhibited similar low 
+    sensitivity (12.96% Recall) alongside higher overfitting (train-test gap of 
+    9.05%) and slow execution (148.49s).
+  - Linear Efficiency: Logistic Regression achieved 77.49% Recall (nearly 5x 
+    greater minority-class sensitivity) and a competitive ROC-AUC (0.8596) in 
+    just 1.59 seconds (33x faster than XGBoost), demonstrating that model 
+    selection in imbalanced financial domains cannot rely on accuracy alone.
+
+3. ARCHITECTURAL & MLOPS NOVELTY
+--------------------------------------------------------------------------------
+To bridge the gap between static experimentation and real-world usability, this 
+project implements a decoupled 3-tier full-stack architecture:
+
+  [Tier 1] Schema-Locked Model Packaging (`backend/models/model_bundle.joblib`):
+           Serializes the trained XGBoost estimator alongside the exact ordered 
+           list of 200 input features and task metadata to eliminate training-
+           serving skew.
+
+  [Tier 2] RESTful Inference Service (`backend/app.py` - Flask):
+           Exposes `GET /health` for diagnostics and `POST /predict` for real-time 
+           JSON inference with strict schema validation (rejecting missing or 
+           extraneous feature keys).
+
+  [Tier 3] Reactive Frontend & Hybrid Deployment (`frontend/` - Angular 22):
+           Provides a 200-field validated input form connected locally via an 
+           Angular dev proxy (`proxy.conf.json`) to `http://127.0.0.1:5000`.
+           Automated via GitHub Actions (`ci.yml` and `pages.yml`), the static 
+           interface is continuously deployed to GitHub Pages while maintaining 
+           a clear security and architectural boundary between public static UI 
+           hosting and private local inference.
+
+4. SUMMARY COMPARISON: REFERENCE PAPER VS. THIS WORK
+--------------------------------------------------------------------------------
+  Dimension              Baramal & Chauhan Study         This Implementation
+  --------------------------------------------------------------------------------------
+  Execution Environment  Offline scripts / notebooks     3-Tier Web App (Flask + Angular)
+  Models Evaluated       XGBoost vs. TabNet              XGBoost, Random Forest, LogReg
+  Primary Metric Focus   Top-line Accuracy & F1          Accuracy Trap, Recall & Speed
+  Artifact Management    Standalone model files          Schema-validated Joblib Bundle
+  DevOps & Hosting       None                            GitHub Actions CI/CD + Pages
+================================================================================

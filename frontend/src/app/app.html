@@ -10,6 +10,15 @@
 
   <form (ngSubmit)="submit()">
     <h2>Feature Schema Input ({{fields.length}} variables)</h2>
+
+    <div class="actions" style="display: flex; gap: 10px; margin-bottom: 16px;">
+      <button type="button" (click)="fillSample('zero')">Reset (All Zeros)</button>
+      <button type="button" (click)="fillSample('high-variance')">Fill Random Customer Values</button>
+      <button type="submit" [disabled]="loading || deployedStatic">
+        {{loading ? 'Predicting...' : 'Run Local Prediction'}}
+      </button>
+    </div>
+
     <div class="grid">
       @for (field of fields; track field.name) {
         <label>
@@ -18,9 +27,6 @@
         </label>
       }
     </div>
-    <button type="submit" [disabled]="loading || deployedStatic">
-      {{loading ? 'Predicting...' : 'Run Local Prediction'}}
-    </button>
   </form>
 
   @if (error) { <p class="error" role="alert">{{error}}</p> }

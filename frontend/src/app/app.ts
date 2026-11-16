@@ -24,8 +24,21 @@ export class App {
     for (const field of this.fields) this.values[field.name] = 0.0;
   }
 
+  fillSample(mode: 'zero' | 'high-variance') {
+    this.error = '';
+    this.result = null;
+    for (const field of this.fields) {
+      if (mode === 'zero') {
+        this.values[field.name] = 0.0;
+      } else {
+        // Generates realistic values across Santander feature ranges (-15 to +20)
+        this.values[field.name] = Number((Math.random() * 35 - 15).toFixed(4));
+      }
+    }
+  }
+
   submit() {
-    this.error = ''; 
+    this.error = '';
     this.result = null;
     if (this.deployedStatic) {
       this.error = 'Static deployment demo: start local Flask API for live prediction.';
